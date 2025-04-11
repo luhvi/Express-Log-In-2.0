@@ -3,6 +3,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { LanguageProps } from './types/LanguageType';
 import Header from './Header';
 
 const getSchema = (signIn: boolean) => {
@@ -35,11 +36,11 @@ const getSchema = (signIn: boolean) => {
     });
 };
 
-type FormProps = {
+type FormProps = LanguageProps & {
   signIn: boolean;
 };
 
-const Form = ({ signIn }: FormProps) => {
+const Form = ({ signIn, language, setLanguage }: FormProps) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const navigate = useNavigate();
@@ -70,25 +71,73 @@ const Form = ({ signIn }: FormProps) => {
 
   const onSubmit: SubmitHandler<FormFields> = async (data: FormFields) => {
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      console.log(data);
+      const res = await fetch(
+        `${import.meta.env.VITE_PUBLIC_DB_URL}/api/signin`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data),
+        }
+      );
+      const result = await res.json();
     } catch (error) {
-      setError('root', {
-        message: 'Something went wrong...',
-      });
+      if (language === 'English') {
+        setError('root', {
+          message: 'Something went wrong...',
+        });
+      } else {
+        setError('root', {
+          message: 'Noget gik galt...',
+        });
+      }
     }
   };
 
+  const formHeaderFunc = () => {
+    if (language === 'English') {
+      if (signIn) {
+        return 'Sign In';
+      } else {
+        return 'Sign Up';
+      }
+    } else {
+      if (signIn) {
+        return 'Log På';
+      } else {
+        return 'Tilmelding';
+      }
+    }
+  };
+
+  const formFooterFunc = () => {
+    if (language === 'English') {
+      if (signIn) {
+        return 'Register';
+      } else {
+        return 'Already have an account? Sign In';
+      }
+    } else {
+      if (signIn) {
+        return 'Tilmeld';
+      } else {
+        return 'Har du allerede en konto? Log På';
+      }
+    }
+  };
+
+  const formHeader = formHeaderFunc();
+  const formFooter = formFooterFunc();
+
   return (
     <>
-      <Header />
+      <Header language={language} setLanguage={setLanguage} />
       <div
         className="flex flex-col w-100 bg-white rounded-sm shadow-[0_0_10px_rgba(0,0,0,0.2)]"
         style={{ height: signIn ? 420 : 520 }}
       >
-        <p className="mt-7 text-red-400 text-2xl font-bold">
-          {signIn ? 'Sign In' : 'Sign Up'}
-        </p>
+        <p className="mt-7 text-red-400 text-2xl font-bold">{formHeader}</p>
 
         <form
           className="flex flex-col text-start ml-10"
@@ -108,7 +157,7 @@ const Form = ({ signIn }: FormProps) => {
           </p>
 
           <label className="text-xl" htmlFor="password">
-            Password
+            {language === 'English' ? 'Password' : 'Adgangskode'}
           </label>
           <div className="relative">
             <input
@@ -118,7 +167,7 @@ const Form = ({ signIn }: FormProps) => {
               name="password"
             />
             <button
-              className="relative right-1/12 text-black hover:text-red-500 transition-colors ease-in-out duration-300 cursor-pointer"
+              className="absolute right-12.5 top-1/2 -translate-y-1/2 text-black hover:text-red-500 transition-colors ease-in-out duration-300 cursor-pointer"
               type="button"
               onClick={() =>
                 setShowPassword((prevShowPassword) => !prevShowPassword)
@@ -135,7 +184,9 @@ const Form = ({ signIn }: FormProps) => {
             <>
               {' '}
               <label className="text-xl" htmlFor="confirmPassword">
-                Confirm Password
+                {language === 'English'
+                  ? 'Confirm Password'
+                  : 'Bekræft Adgangskode'}
               </label>
               <div className="relative">
                 <input
@@ -145,7 +196,7 @@ const Form = ({ signIn }: FormProps) => {
                   name="confirmPassword"
                 />
                 <button
-                  className="relative right-1/12 text-black hover:text-red-500 transition-colors ease-in-out duration-300 cursor-pointer"
+                  className="absolute right-12.5 top-1/2 -translate-y-1/2 text-black hover:text-red-500 transition-colors ease-in-out duration-300 cursor-pointer"
                   type="button"
                   onClick={() =>
                     setShowConfirmPassword(
@@ -169,8 +220,10 @@ const Form = ({ signIn }: FormProps) => {
               <p>
                 Submitting <i className="fa-solid fa-spinner animate-spin"></i>
               </p>
-            ) : (
+            ) : language === 'English' ? (
               'Submit'
+            ) : (
+              'Indsend'
             )}
           </button>
         </form>
@@ -181,7 +234,7 @@ const Form = ({ signIn }: FormProps) => {
           className="text-sm text-red-400 font-semibold cursor-pointer hover:text-red-300 transition-colors duration-300 ease-in-out"
           onClick={() => navigate(signIn ? '/signup' : '/signin')}
         >
-          {signIn ? 'Register' : 'Already have an account? Sign In'}
+          {formFooter}
         </p>
       </div>
     </>
