@@ -5,31 +5,37 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LanguageProps } from './types/LanguageType';
 import Header from './Header';
+import errorMessages from './errorMessages';
 
-const getSchema = (signIn: boolean) => {
+const getSchema = (signIn: boolean, language: string) => {
   return z
     .object({
       email: z
         .string()
-        .min(1, { message: 'Email is Required' })
-        .email({ message: 'Please enter a valid email' }),
-      password: z.string().min(1, { message: 'Password is Required' }).min(8, {
-        message: 'Password must be at least 8 characters',
-      }),
+        .min(1, { message: errorMessages[language].email.required })
+        .email({ message: errorMessages[language].email.invalid }),
+      password: z
+        .string()
+        .min(1, { message: errorMessages[language].password.required })
+        .min(8, {
+          message: errorMessages[language].password.minLength,
+        }),
       ...(signIn
         ? {}
         : {
             confirmPassword: z
               .string()
-              .min(8, { message: 'Please confirm your password' })
-              .min(8, { message: 'Password must be at least 8 characters' }),
+              .min(8, {
+                message: errorMessages[language].confirmPassword.required,
+              })
+              .min(8, { message: '' }),
           }),
     })
     .superRefine((val, ctx) => {
       if (!signIn && val.password !== val.confirmPassword) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: "Passwords don't match",
+          message: errorMessages[language].confirmPassword.invalid,
           path: ['confirmPassword'],
         });
       }
@@ -43,6 +49,7 @@ type FormProps = LanguageProps & {
 const Form = ({ signIn, language, setLanguage }: FormProps) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
 
   const showPasswordIcon = showPassword ? (
@@ -57,22 +64,25 @@ const Form = ({ signIn, language, setLanguage }: FormProps) => {
     <i className="fa-solid fa-eye-slash w-5"></i>
   );
 
-  const schema = getSchema(signIn);
+  const schema = getSchema(signIn, language);
   type FormFields = z.infer<typeof schema>;
 
   const {
     register,
     handleSubmit,
     setError,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm<FormFields>({
     resolver: zodResolver(schema),
   });
 
   const onSubmit: SubmitHandler<FormFields> = async (data: FormFields) => {
     try {
+      setIsSubmitting(true);
       const res = await fetch(
-        `${import.meta.env.VITE_PUBLIC_DB_URL}/api/signin`,
+        `${import.meta.env.VITE_PUBLIC_DB_URL}/api/${
+          signIn ? 'signin' : 'signup'
+        }`,
         {
           method: 'POST',
           headers: {
@@ -81,17 +91,25 @@ const Form = ({ signIn, language, setLanguage }: FormProps) => {
           body: JSON.stringify(data),
         }
       );
+
       const result = await res.json();
-    } catch (error) {
-      if (language === 'English') {
-        setError('root', {
-          message: 'Something went wrong...',
-        });
-      } else {
-        setError('root', {
-          message: 'Noget gik galt...',
-        });
+
+      if (!res.ok) {
+        throw new Error(result.message);
       }
+
+      localStorage.setItem('authToken', result.token);
+      localStorage.setItem('email', data.email);
+
+      setTimeout(() => {
+        setIsSubmitting(false);
+        navigate('./');
+      }, 1000);
+    } catch (error) {
+      setIsSubmitting(false);
+      setError('root', {
+        message: errorMessages[language].root,
+      });
     }
   };
 
