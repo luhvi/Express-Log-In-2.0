@@ -1,31 +1,31 @@
-import { useNavigate } from 'react-router-dom';
-import { LanguageProps } from './types/LanguageType';
+import { useNavigate } from "react-router-dom";
+import { LanguageProps } from "./types/LanguageType";
 
 const Header = ({ language, setLanguage }: LanguageProps) => {
   const navigate = useNavigate();
 
   const handleLanguageChange = (
-    event: React.ChangeEvent<HTMLSelectElement>
+    event: React.ChangeEvent<HTMLSelectElement>,
   ) => {
     const selectedLanguage = event.target.value;
-    if (selectedLanguage === 'english' || selectedLanguage === 'dansk') {
+    if (selectedLanguage === "english" || selectedLanguage === "dansk") {
       const formattedLanguage =
-        selectedLanguage === 'english' ? 'English' : 'Dansk';
+        selectedLanguage === "english" ? "English" : "Dansk";
       setLanguage(formattedLanguage);
     }
   };
 
   return (
-    <div className="flex flex-col items-center text-center fixed top-0 left-0">
-      <header className="flex flex-row items-center justify-center text-center relative w-screen h-12 md:h-16 lg:h-20 bg-red-400 text-md md:text-lg lg:text-xl text-white shadow-lg">
+    <div className="fixed top-0 left-0 flex flex-col items-center text-center">
+      <header className="text-md relative flex h-12 w-screen flex-row items-center justify-center bg-red-400 text-center text-white shadow-lg md:h-16 md:text-lg lg:h-20 lg:text-xl">
         <i
           className="fa-solid fa-earth-europe mr-1 cursor-pointer"
-          onClick={() => navigate('/')}
+          onClick={() => navigate("/")}
         ></i>
-        <p className="cursor-pointer" onClick={() => navigate('/')}>
-          {language === 'English' ? "luhvi's page." : 'luhvis side.'}
+        <p className="cursor-pointer" onClick={() => navigate("/")}>
+          {language === "English" ? "luhvi's page." : "luhvis side."}
         </p>
-        <form className="absolute right-8 top-1/2 -translate-y-1/2 text-white">
+        <form className="absolute top-1/2 right-8 -translate-y-1/2 text-white">
           <select
             className="outline-none"
             name="language"
