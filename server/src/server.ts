@@ -123,7 +123,9 @@ app.post(
       res.status(201).json({ success: true, token });
     } catch (error) {
       console.error('Something went wrong...', error);
-      res.status(500).json({ success: false, message: 'Something went wrong' });
+      res
+        .status(500)
+        .json({ success: false, message: 'Something went wrong...' });
     }
   }
 );

@@ -103,7 +103,7 @@ const Form = ({ signIn, language, setLanguage }: FormProps) => {
 
       setTimeout(() => {
         setIsSubmitting(false);
-        navigate("./");
+        navigate("/");
       }, 1000);
     } catch (error) {
       setIsSubmitting(false);
